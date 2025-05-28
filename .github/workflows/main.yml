@@ -25,6 +25,13 @@ jobs:
         docker build -t my-todo-app:${{ github.sha }} . # Build the image, tag with commit SHA
         echo "Docker image built successfully with tag my-todo-app:${{ github.sha }}"
 
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    
+    - name: Push image
+      run: docker push my-todo-app:${{ github.sha }}
+
+
     - name: Run basic test (optional) # Step 4: Perform a simple health check
       run: |
         # In a real app, you'd run actual unit tests here (e.g., pytest, npm test).
