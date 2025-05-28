@@ -24,11 +24,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t pramod123/my-todo-app:${{ github.sha }} .
+          docker build -t pramodkumar054/my-todo-app:${{ github.sha }} .
           echo "Docker image built successfully with tag pramodkumar054/my-todo-app:${{ github.sha }}"
-
-      - name: Push image
-        run: docker push pramod123/my-todo-app:${{ github.sha }}
 
       - name: Run basic test (optional)
         run: |
