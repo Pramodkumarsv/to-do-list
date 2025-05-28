@@ -8,7 +8,6 @@ on:
     branches:
       - main
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,14 +22,28 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Get Tag Name
-        id: get_tag
-        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
       - name: Build Docker image
         run: |
-          docker build -t pramodkumar054/my-todo-app:${{ env.TAG }} .
-          echo "Built image with tag pramodkumar054/my-todo-app:${{ env.TAG }}"
+          docker build -t pramodkumar054/my-todo-app:${{ github.sha }} .
+          docker tag pramodkumar054/my-todo-app:${{ github.sha }} pramodkumar054/my-todo-app:latest
+          echo "Docker image built and tagged as both latest and ${{ github.sha }}"
 
-      - name: Push Docker image
-        run: docker push pramodkumar054/my-todo-app:${{ env.TAG }}
+      - name: Run basic test (optional)
+        run: |
+          docker run -d -p 5001:5000 --name test-app pramodkumar054/my-todo-app:${{ github.sha }}
+          sleep 5
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/)
+          echo "HTTP Status Code: $STATUS_CODE"
+          if [ "$STATUS_CODE" -ne "200" ]; then
+            echo "Application did not start successfully!"
+            docker logs test-app
+            exit 1
+          fi
+          echo "Application started successfully."
+          docker stop test-app
+          docker rm test-app
+
+      - name: Push image to Docker Hub
+        run: |
+          docker push pramodkumar054/my-todo-app:${{ github.sha }}
+          docker push pramodkumar054/my-todo-app:latest
