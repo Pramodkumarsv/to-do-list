@@ -25,14 +25,14 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t pramod123/my-todo-app:${{ github.sha }} .
-          echo "Docker image built successfully with tag pramod123/my-todo-app:${{ github.sha }}"
+          echo "Docker image built successfully with tag pramodkumar054/my-todo-app:${{ github.sha }}"
 
       - name: Push image
         run: docker push pramod123/my-todo-app:${{ github.sha }}
 
       - name: Run basic test (optional)
         run: |
-          docker run -d -p 5001:5000 --name test-app pramod123/my-todo-app:${{ github.sha }}
+          docker run -d -p 5001:5000 --name test-app pramodkumar054/my-todo-app:${{ github.sha }}
           sleep 5
           STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/)
           echo "HTTP Status Code: $STATUS_CODE"
