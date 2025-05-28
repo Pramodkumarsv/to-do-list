@@ -1,50 +1,46 @@
-# .github/workflows/main.yml
 name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - main # Trigger on pushes to the 'main' branch
+      - main
   pull_request:
     branches:
-      - main # Trigger on pull requests targeting the 'main' branch
+      - main
 
 jobs:
-  build: # Define a job named 'build'
-    runs-on: ubuntu-latest # Specify the runner environment (GitHub-hosted Ubuntu VM)
+  build:
+    runs-on: ubuntu-latest
 
-    steps: # A sequence of tasks to be executed in this job
-    - name: Checkout code # Step 1: Get your code from the repository
-      uses: actions/checkout@v4 # This action downloads your repository onto the runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx # Step 2: Set up Docker's build environment
-      uses: docker/setup-buildx-action@v3 # Buildx provides enhanced build capabilities
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Build Docker image # Step 3: Build the Docker image from your Dockerfile
-      run: | # 'run' executes shell commands
-        sudo docker build -t my-todo-app:${{ github.sha }} . # Build the image, tag with commit SHA
-        echo "Docker image built successfully with tag my-todo-app:${{ github.sha }}"
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-    
-    - name: Push image
-      run: sudo docker push my-todo-app:${{ github.sha }}
+      - name: Build Docker image
+        run: |
+          docker build -t pramod123/my-todo-app:${{ github.sha }} .
+          echo "Docker image built successfully with tag pramod123/my-todo-app:${{ github.sha }}"
 
+      - name: Push image
+        run: docker push pramod123/my-todo-app:${{ github.sha }}
 
-    - name: Run basic test (optional) # Step 4: Perform a simple health check
-      run: |
-        # In a real app, you'd run actual unit tests here (e.g., pytest, npm test).
-        # For this simple app, we'll just check if the container can start and respond.
-        docker run -d -p 5001:5000 --name test-app my-todo-app:${{ github.sha }} # Run container in detached mode
-        sleep 5 # Give the app a moment to start up
-        STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/) # Get HTTP status code
-        echo "HTTP Status Code: $STATUS_CODE"
-        if [ "$STATUS_CODE" -ne "200" ]; then # Check if status code is not 200 (OK)
-          echo "Application did not start successfully!"
-          docker logs test-app # Print container logs for debugging
-          exit 1 # Exit with a non-zero code to indicate failure
-        fi
-        echo "Application started successfully."
-        docker stop test-app # Stop the test container
-        docker rm test-app   # Remove the test container
+      - name: Run basic test (optional)
+        run: |
+          docker run -d -p 5001:5000 --name test-app pramod123/my-todo-app:${{ github.sha }}
+          sleep 5
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/)
+          echo "HTTP Status Code: $STATUS_CODE"
+          if [ "$STATUS_CODE" -ne "200" ]; then
+            echo "Application did not start successfully!"
+            docker logs test-app
+            exit 1
+          fi
+          echo "Application started successfully."
+          docker stop test-app
+          docker rm test-app
