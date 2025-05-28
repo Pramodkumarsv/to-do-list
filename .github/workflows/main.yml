@@ -2,8 +2,12 @@ name: CI/CD Pipeline
 
 on:
   push:
-    tags:
-      - 'v*'  # Trigger only on git tag like v1, v2, etc.
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 
 jobs:
   build:
